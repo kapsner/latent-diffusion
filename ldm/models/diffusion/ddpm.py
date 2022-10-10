@@ -54,7 +54,9 @@ class DDPM(pl.LightningModule):
                  monitor="val/loss",
                  use_ema=True,
                  first_stage_key="image",
-                 image_size=256,
+                 # image_size=256,
+                 image_size_x=80,
+                 image_size_y=96,
                  channels=3,
                  log_every_t=100,
                  clip_denoised=True,
@@ -80,7 +82,9 @@ class DDPM(pl.LightningModule):
         self.clip_denoised = clip_denoised
         self.log_every_t = log_every_t
         self.first_stage_key = first_stage_key
-        self.image_size = image_size  # try conv?
+        # self.image_size = image_size  # try conv?
+        self.image_size_x=image_size_x
+        self.image_size_y=image_size_y
         self.channels = channels
         self.use_positional_encodings = use_positional_encodings
         self.model = DiffusionWrapper(unet_config, conditioning_key)
@@ -266,9 +270,10 @@ class DDPM(pl.LightningModule):
 
     @torch.no_grad()
     def sample(self, batch_size=16, return_intermediates=False):
-        image_size = self.image_size
+        image_size_x = self.image_size_x
+        image_size_y = self.image_size_y
         channels = self.channels
-        return self.p_sample_loop((batch_size, channels, image_size, image_size),
+        return self.p_sample_loop((batch_size, channels, image_size_x, image_size_y),
                                   return_intermediates=return_intermediates)
 
     def q_sample(self, x_start, t, noise=None):
@@ -1218,7 +1223,7 @@ class LatentDiffusion(DDPM):
                verbose=True, timesteps=None, quantize_denoised=False,
                mask=None, x0=None, shape=None,**kwargs):
         if shape is None:
-            shape = (batch_size, self.channels, self.image_size, self.image_size)
+            shape = (batch_size, self.channels, self.image_size_x, self.image_size_y)
         if cond is not None:
             if isinstance(cond, dict):
                 cond = {key: cond[key][:batch_size] if not isinstance(cond[key], list) else
@@ -1236,7 +1241,7 @@ class LatentDiffusion(DDPM):
 
         if ddim:
             ddim_sampler = DDIMSampler(self)
-            shape = (self.channels, self.image_size, self.image_size)
+            shape = (self.channels, self.image_size_x, self.image_size_y)
             samples, intermediates =ddim_sampler.sample(ddim_steps,batch_size,
                                                         shape,cond,verbose=False,**kwargs)
 
@@ -1275,7 +1280,8 @@ class LatentDiffusion(DDPM):
                 xc = log_txt_as_img((x.shape[2], x.shape[3]), batch["human_label"])
                 log['conditioning'] = xc
             elif isimage(xc):
-                log["conditioning"] = xc
+                # log["conditioning"] = xc
+                log["conditioning"] = log_txt_as_img((x.shape[2], x.shape[3]), np.array2string(xc.squeeze().cpu().numpy()))
             if ismap(xc):
                 log["original_conditioning"] = self.to_rgb(xc)
 
@@ -1346,7 +1352,7 @@ class LatentDiffusion(DDPM):
         if plot_progressive_rows:
             with self.ema_scope("Plotting Progressives"):
                 img, progressives = self.progressive_denoising(c,
-                                                               shape=(self.channels, self.image_size, self.image_size),
+                                                               shape=(self.channels, self.image_size_x, self.image_size_y),
                                                                batch_size=N)
             prog_row = self._get_denoise_row_from_list(progressives, desc="Progressive Generation")
             log["progressive_row"] = prog_row

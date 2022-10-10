@@ -1,9 +1,10 @@
+from numpy import isin
 import torch
 import torch.nn as nn
 from functools import partial
 import clip
 from einops import rearrange, repeat
-import kornia
+# import kornia
 
 
 from ldm.modules.x_transformer import Encoder, TransformerWrapper  # TODO: can we directly rely on lucidrains code and simply add this as a reuirement? --> test
@@ -30,6 +31,30 @@ class ClassEmbedder(nn.Module):
         # this is for use in crossattn
         c = batch[key][:, None]
         c = self.embedding(c)
+        return c
+
+
+class MultiClassEmbedder(nn.Module):
+    def __init__(self, embed_dim, key='class'):
+        super().__init__()
+        self.key = key
+        self.embeddings = nn.ModuleList([
+            nn.Embedding(120, embed_dim), # Age
+            nn.Embedding(3, embed_dim), # View
+            nn.Embedding(3, embed_dim), # APPA
+            nn.Embedding(3, embed_dim), # Pneumonia
+            nn.Embedding(3, embed_dim), # Lung opacity
+        ])
+
+    def forward(self, batch, key=None):
+        if key is None:
+            key = self.key
+        # this is for use in crossattn
+        if isinstance(batch, dict):
+            c = batch[key][:, None]
+        else:
+            c = batch.long()
+        c = torch.cat([embedding(c[..., k]) for embedding, k in zip(self.embeddings, range(len(self.embeddings)))], 2).squeeze()  # TODO: 2
         return c
 
 
@@ -167,36 +192,36 @@ class FrozenCLIPTextEmbedder(nn.Module):
         return z
 
 
-class FrozenClipImageEmbedder(nn.Module):
-    """
-        Uses the CLIP image encoder.
-        """
-    def __init__(
-            self,
-            model,
-            jit=False,
-            device='cuda' if torch.cuda.is_available() else 'cpu',
-            antialias=False,
-        ):
-        super().__init__()
-        self.model, _ = clip.load(name=model, device=device, jit=jit)
+# class FrozenClipImageEmbedder(nn.Module):
+#     """
+#         Uses the CLIP image encoder.
+#         """
+#     def __init__(
+#             self,
+#             model,
+#             jit=False,
+#             device='cuda' if torch.cuda.is_available() else 'cpu',
+#             antialias=False,
+#         ):
+#         super().__init__()
+#         self.model, _ = clip.load(name=model, device=device, jit=jit)
 
-        self.antialias = antialias
+#         self.antialias = antialias
 
-        self.register_buffer('mean', torch.Tensor([0.48145466, 0.4578275, 0.40821073]), persistent=False)
-        self.register_buffer('std', torch.Tensor([0.26862954, 0.26130258, 0.27577711]), persistent=False)
+#         self.register_buffer('mean', torch.Tensor([0.48145466, 0.4578275, 0.40821073]), persistent=False)
+#         self.register_buffer('std', torch.Tensor([0.26862954, 0.26130258, 0.27577711]), persistent=False)
 
-    def preprocess(self, x):
-        # normalize to [0,1]
-        x = kornia.geometry.resize(x, (224, 224),
-                                   interpolation='bicubic',align_corners=True,
-                                   antialias=self.antialias)
-        x = (x + 1.) / 2.
-        # renormalize according to clip
-        x = kornia.enhance.normalize(x, self.mean, self.std)
-        return x
+#     def preprocess(self, x):
+#         # normalize to [0,1]
+#         x = kornia.geometry.resize(x, (224, 224),
+#                                    interpolation='bicubic',align_corners=True,
+#                                    antialias=self.antialias)
+#         x = (x + 1.) / 2.
+#         # renormalize according to clip
+#         x = kornia.enhance.normalize(x, self.mean, self.std)
+#         return x
 
-    def forward(self, x):
-        # x is assumed to be in range [-1,1]
-        return self.model.encode_image(self.preprocess(x))
+#     def forward(self, x):
+#         # x is assumed to be in range [-1,1]
+#         return self.model.encode_image(self.preprocess(x))
 
