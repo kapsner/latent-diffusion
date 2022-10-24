@@ -17,6 +17,8 @@ from taming.models import vqgan
 def unique_label_mapper_and_inverse():
     db = pd.read_csv(os.path.join("/lustre/iwi5/iwi5044h", "reduced_nih_labels.csv"))
     labels = list(db["Finding_Labels"].unique())
+    print("WARNING: Changed to sorted NIH labels.")
+    labels.sort()
     return dict(zip(range(len(labels)), labels)), dict(zip(labels, range(len(labels))))
 
 
@@ -33,7 +35,7 @@ def load_model_from_config(config, ckpt):
 
 def get_model():
     config = OmegaConf.load("/home/hpc/iwi5/iwi5044h/latent-diffusion/configs/latent-diffusion/nih-vq.yaml")  
-    model = load_model_from_config(config, "/home/hpc/iwi5/iwi5044h/latent-diffusion/logs/2022-10-09T16-37-06_nih-vq/checkpoints/last.ckpt")
+    model = load_model_from_config(config, "/home/hpc/iwi5/iwi5044h/latent-diffusion/logs/2022-10-16T15-49-31_nih-vq/checkpoints/last.ckpt")
     return model
 
 
@@ -54,6 +56,7 @@ batch_size = 128
 save_path = "/home/woody/iwi5/shared/Diffusion/images"
 save_path_local = "/scratch/images"
 db = pd.read_csv("/lustre/iwi5/iwi5044h/reduced_nih_labels.csv")
+db = db[(db["fold"] == "train") | (db["fold"] == "val")]
 db["labels_mapped"] = db["Finding_Labels"].map(label_mapper)
 
 with torch.no_grad():
@@ -98,16 +101,5 @@ with torch.no_grad():
 print("Creating archive from images.")
 shutil.make_archive("/scratch/images", 'zip', save_path_local)
 print("Copying to woody.")
-shutil.copy("/scratch/images.zip", "/home/woody/iwi5/shared/Diffusion/images.zip")
-
-
-# # display as grid
-# grid = torch.stack(all_samples, 0)
-# grid = rearrange(grid, 'n b c h w -> (n b) c h w')
-# grid = make_grid(grid, nrow=n_samples_per_class)
-
-# # to image
-# grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
-# img = Image.fromarray(grid.astype(np.uint8))
-# img.save("/home/hpc/iwi5/iwi5044h/latent-diffusion/samples/samples.png")
+shutil.copy("/scratch/images.zip", "/home/woody/iwi5/shared/Diffusion/smaller_bs_images_0.zip")
 

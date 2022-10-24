@@ -118,6 +118,7 @@ class VQModel(pl.LightningModule):
     def forward(self, input, return_pred_indices=False):
         quant, diff, (_,_,ind) = self.encode(input)
         dec = self.decode(quant)
+
         if return_pred_indices:
             return dec, diff, ind
         return dec, diff
@@ -172,6 +173,7 @@ class VQModel(pl.LightningModule):
     def _validation_step(self, batch, batch_idx, suffix=""):
         x = self.get_input(batch, self.image_key)
         xrec, qloss, ind = self(x, return_pred_indices=True)
+
         aeloss, log_dict_ae = self.loss(qloss, x, xrec, 0,
                                         self.global_step,
                                         last_layer=self.get_last_layer(),
@@ -281,6 +283,7 @@ class VQModelInterface(VQModel):
             quant = h
         quant = self.post_quant_conv(quant)
         dec = self.decoder(quant)
+
         return dec
 
 

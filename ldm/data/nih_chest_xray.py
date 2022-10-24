@@ -29,8 +29,8 @@ class NIHBase(Dataset):
                         pass
         self.db = pd.read_csv(os.path.join(self.local_path, "reduced_nih_labels.csv"))
         labels = list(self.db["Finding_Labels"].unique())
+        labels.sort()
         unique_labels_mapper = dict(zip(labels, range(len(labels))))
-        # Can this be in the wrong order?
         self.unique_labels_mapper_inverse = dict(zip(range(len(labels)), labels))
         self.db["Finding_Labels_mapped"] = self.db["Finding_Labels"].map(unique_labels_mapper)
         image_folders = [f for f in os.listdir(self.local_path) if "images_" in f]
@@ -56,6 +56,9 @@ class NIHBase(Dataset):
         image = image.squeeze()
         if len(image.shape) > 2:
             image = image[0]
+        
+        # TODO: just temporarily for work with pretrained AE
+        # image = torch.stack([image, image, image], -1)
 
         class_label = torch.tensor(int(row["Finding_Labels_mapped"]))
         human_label = self.unique_labels_mapper_inverse[int(class_label)]
@@ -68,7 +71,8 @@ class NIHBase(Dataset):
 class NIHTrain(NIHBase):
     def __init__(self):
         super().__init__()
-        self.df = self.db.iloc[:, :int(0.7 * len(self.db))]
+        self.df = self.db[self.db["fold"] == "train"]
+        print(f"Number of training samples ({len(self.df)})")
 
     def __len__(self):
         return len(self.df)
@@ -77,7 +81,8 @@ class NIHTrain(NIHBase):
 class NIHValidation(NIHBase):
     def __init__(self):
         super().__init__()
-        self.df = self.db.iloc[:, int(0.7 * len(self.db)):]
+        self.df = self.db[self.db["fold"] == "val"]
+        print(f"Number of validation samples ({len(self.df)})")
 
     def __len__(self):
         return len(self.df)
