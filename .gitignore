@@ -3,3 +3,6 @@ latent_diffusion.egg-info/*
 logs/*
 *.pth
 *.zip
+*.png
+*.txt
+*.shell

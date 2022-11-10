@@ -423,6 +423,7 @@ class DDPM(pl.LightningModule):
         if self.learn_logvar:
             params = params + [self.logvar]
         opt = torch.optim.AdamW(params, lr=lr)
+        # TODO: Reduce lr on plateau?
         return opt
 
 
