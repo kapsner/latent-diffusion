@@ -45,5 +45,6 @@ lightning:
   trainer:
     log_every_n_steps: 50
     progress_bar_refresh_rate: 50
-    gpus: "0,1" # ,2,3,4,5,6,7"
-    # accelerator: ddp
+    gpus: "0,1,2,3,4,5,6,7"
+    # accelerator: cuda
+    strategy: ddp

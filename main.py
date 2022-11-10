@@ -287,7 +287,7 @@ class SetupCallback(Callback):
 
 
 class ImageLogger(Callback):
-    def __init__(self, batch_frequency, max_images, clamp=True, increase_log_steps=True,
+    def __init__(self, batch_frequency, max_images, clamp=True, increase_log_steps=False,
                  rescale=True, disabled=False, log_on_batch_idx=False, log_first_step=False,
                  log_images_kwargs=None):
         super().__init__()
@@ -392,27 +392,27 @@ class ImageLogger(Callback):
                 self.log_gradients(trainer, pl_module, batch_idx=batch_idx)
 
 
-class CUDACallback(Callback):
-    # see https://github.com/SeanNaren/minGPT/blob/master/mingpt/callback.py
-    def on_train_epoch_start(self, trainer, pl_module):
-        # Reset the memory use counter
-        torch.cuda.reset_peak_memory_stats(trainer.root_gpu)
-        torch.cuda.synchronize(trainer.root_gpu)
-        self.start_time = time.time()
+# class CUDACallback(Callback):
+#     # see https://github.com/SeanNaren/minGPT/blob/master/mingpt/callback.py
+#     def on_train_epoch_start(self, trainer, pl_module):
+#         # Reset the memory use counter
+#         torch.cuda.reset_peak_memory_stats(trainer.root_gpu)
+#         torch.cuda.synchronize(trainer.root_gpu)
+#         self.start_time = time.time()
 
-    def on_train_epoch_end(self, trainer, pl_module, outputs):
-        torch.cuda.synchronize(trainer.root_gpu)
-        max_memory = torch.cuda.max_memory_allocated(trainer.root_gpu) / 2 ** 20
-        epoch_time = time.time() - self.start_time
+#     def on_train_epoch_end(self, trainer, pl_module, outputs):
+#         torch.cuda.synchronize(trainer.root_gpu)
+#         max_memory = torch.cuda.max_memory_allocated(trainer.root_gpu) / 2 ** 20
+#         epoch_time = time.time() - self.start_time
 
-        try:
-            max_memory = trainer.training_type_plugin.reduce(max_memory)
-            epoch_time = trainer.training_type_plugin.reduce(epoch_time)
+#         try:
+#             max_memory = trainer.training_type_plugin.reduce(max_memory)
+#             epoch_time = trainer.training_type_plugin.reduce(epoch_time)
 
-            rank_zero_info(f"Average Epoch time: {epoch_time:.2f} seconds")
-            rank_zero_info(f"Average Peak memory {max_memory:.2f}MiB")
-        except AttributeError:
-            pass
+#             rank_zero_info(f"Average Epoch time: {epoch_time:.2f} seconds")
+#             rank_zero_info(f"Average Peak memory {max_memory:.2f}MiB")
+#         except AttributeError:
+#             pass
 
 
 if __name__ == "__main__":
@@ -606,7 +606,7 @@ if __name__ == "__main__":
             "image_logger": {
                 "target": "main.ImageLogger",
                 "params": {
-                    "batch_frequency": 750,
+                    "batch_frequency": 3000, # 750,
                     "max_images": 4,
                     "clamp": True,
                     "increase_log_steps": False,
@@ -619,9 +619,9 @@ if __name__ == "__main__":
                     # "log_momentum": True
                 }
             },
-            "cuda_callback": {
-                "target": "main.CUDACallback"
-            },
+            # "cuda_callback": {
+            #     "target": "main.CUDACallback"
+            # },
         }
         if version.parse(pl.__version__) >= version.parse('1.4.0'):
             default_callbacks_cfg.update({'checkpoint_callback': modelckpt_cfg})
