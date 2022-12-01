@@ -1,0 +1,1 @@
+python main.py -b configs/autoencoder/ae_dce_mip.yaml -t -r /raid/home/follels/Documents/latent-diffusion/logs/2022-10-17T10-50-26_ae_dce_mip/checkpoints/last.ckpt &> ae_dce_mip.out

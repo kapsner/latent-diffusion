@@ -1,0 +1,1 @@
+python main.py -b configs/latent-diffusion/dce_mip-vq.yaml -t -r /raid/home/follels/Documents/latent-diffusion/logs/2022-10-19T09-05-29_dce_mip-vq_pretrained/checkpoints/epoch=000072.ckpt &> ldm_dce_mip.out
