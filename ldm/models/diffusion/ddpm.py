@@ -1281,8 +1281,8 @@ class LatentDiffusion(DDPM):
                 xc = log_txt_as_img((x.shape[2], x.shape[3]), batch["human_label"])
                 log['conditioning'] = xc
             elif isimage(xc):
-                # log["conditioning"] = xc
-                log["conditioning"] = log_txt_as_img((x.shape[2], x.shape[3]), np.array2string(xc.squeeze().cpu().numpy()))
+                log["conditioning"] = self.to_rgb(xc)
+                # log["conditioning"] = log_txt_as_img((x.shape[2], x.shape[3]), np.array2string(xc.squeeze().cpu().numpy()))
             if ismap(xc):
                 log["original_conditioning"] = self.to_rgb(xc)
 

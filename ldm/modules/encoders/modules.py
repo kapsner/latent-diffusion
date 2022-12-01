@@ -18,7 +18,6 @@ class AbstractEncoder(nn.Module):
         raise NotImplementedError
 
 
-
 class ClassEmbedder(nn.Module):
     def __init__(self, embed_dim, n_classes=1000, key='class'):
         super().__init__()

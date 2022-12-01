@@ -4,23 +4,23 @@ model:
   params:
     linear_start: 0.0015
     linear_end: 0.0205
-    log_every_t: 1000
+    log_every_t: 100
     timesteps: 1000
     loss_type: l1
     first_stage_key: image
-    cond_stage_key: class_label
+    cond_stage_key: segmentation
     image_size_x: 64
     image_size_y: 64
     channels: 3
-    concat_mode: false
+    concat_mode: true
     cond_stage_trainable: true
     unet_config:
       target: ldm.modules.diffusionmodules.openaimodel.UNetModel
       params:
-        image_size: 128
-        in_channels: 3  
-        out_channels: 3 
-        model_channels: 32
+        image_size: 64
+        in_channels: 6
+        out_channels: 3
+        model_channels: 128
         attention_resolutions:
         - 32
         - 16
@@ -31,9 +31,7 @@ model:
         - 4
         - 8
         num_heads: 8
-        use_spatial_transformer: true
-        transformer_depth: 1
-        context_dim: 512
+    
     first_stage_config:
       target: ldm.models.autoencoder.VQModelInterface
       params:
@@ -58,13 +56,13 @@ model:
           dropout: 0.0
         lossconfig:
           target: torch.nn.Identity
-          # target: torch.nn.L1Loss
+    
     cond_stage_config:
-      target: ldm.modules.encoders.modules.ClassEmbedderSqueezed
+      target: ldm.modules.encoders.modules.SpatialRescaler
       params:
-        embed_dim: 512
-        n_classes: 14
-        key: class_label
+        n_stages: 2
+        in_channels: 1
+        out_channels: 3
 
 data:
   target: main.DataModuleFromConfig
@@ -73,13 +71,12 @@ data:
     wrap: false
     num_workers: 10
     train:
-      target: ldm.data.dce_mip.DCEMipTrain
+      target: ldm.data.dce_mip.DCEMipMaskTrain
     validation:
-      target: ldm.data.dce_mip.DCEMipValidation
+      target: ldm.data.dce_mip.DCEMipMaskValidation
 
 lightning:
   trainer:
     log_every_n_steps: 50
     progress_bar_refresh_rate: 50
-    gpus: "0," # "0,1,2,3,4,5,6,7"
-    # accelerator: ddp
+    gpus: "0,"

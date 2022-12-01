@@ -323,8 +323,10 @@ class ImageLogger(Callback):
         root = os.path.join(save_dir, "images", split)
         for k in images:
             grid = torchvision.utils.make_grid(images[k], nrow=4)
-            if self.rescale:
+            if self.rescale and k != "conditioning":
                 grid = (grid + 1.0) / 2.0  # -1,1 -> 0,1; c,h,w
+            elif k == "conditioning":
+                grid = (grid / 6.0)
             grid = grid.transpose(0, 1).transpose(1, 2).squeeze(-1)
             grid = grid.numpy()
             grid = (grid * 255).astype(np.uint8)
@@ -357,7 +359,7 @@ class ImageLogger(Callback):
                 images[k] = images[k][:N]
                 if isinstance(images[k], torch.Tensor):
                     images[k] = images[k].detach().cpu()
-                    if self.clamp:
+                    if self.clamp and k != "conditioning":
                         images[k] = torch.clamp(images[k], -1., 1.)
 
             self.log_local(pl_module.logger.save_dir, split, images,
@@ -606,7 +608,7 @@ if __name__ == "__main__":
             "image_logger": {
                 "target": "main.ImageLogger",
                 "params": {
-                    "batch_frequency": 3000, # 750,
+                    "batch_frequency": 250,#250, # 750,
                     "max_images": 4,
                     "clamp": True,
                     "increase_log_steps": False,
