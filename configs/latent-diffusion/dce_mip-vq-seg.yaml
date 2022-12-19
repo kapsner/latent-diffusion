@@ -77,6 +77,6 @@ data:
 
 lightning:
   trainer:
-    log_every_n_steps: 50
+    log_every_n_steps: 20
     progress_bar_refresh_rate: 50
     gpus: "0,"
