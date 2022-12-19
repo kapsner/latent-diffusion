@@ -14,6 +14,7 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 import numpy as np
 from torch.utils.data import Dataset
+from sklearn.model_selection import train_test_split
 
 
 class DCEMip(Dataset):
@@ -74,25 +75,42 @@ class DCEMipMask(Dataset):
         print(f"# nifti: {len(label_nii)}")
         mip_files = [l.replace("labelsTr", "dce_mips2").replace(".json", "_mip.npy") for l in label_jsons]
         print(f"# mips: {len(mip_files)}")
-        label_jsons, label_nii, mip_files = self.remove_missing_files((label_jsons, label_nii, mip_files))
+        label_jsons, label_nii, mip_files, birads_max = self.remove_missing_files((label_jsons, label_nii, mip_files))
 
         self.db = pd.DataFrame({
             "label_json_path": label_jsons,
             "label_nii_path": label_nii,
-            "mip_path": mip_files
+            "mip_path": mip_files,
+            "birads_max": birads_max
         })
         print(f"# database: {len(self.db)}")
+        
+        # split into training / test dataset here
+        self.db_train, self.db_val = train_test_split(
+            self.db,
+            test_size=0.3,
+            random_state=42,
+            stratify=self.db[["birads_max"]]
+        )
         
         
 
     @staticmethod
     def remove_missing_files(files:tuple):
         new_files = []
-        for f_a, f_b, f_c in zip(*files):
-            if os.path.exists(f_a) and os.path.exists(f_b) and os.path.exists(f_c):
-                new_files.append((f_a, f_b, f_c))
+        for lbl_json, lbl_nifti, mip_file in zip(*files):
+            if os.path.exists(lbl_json) and \
+              os.path.exists(lbl_nifti) and \
+              os.path.exists(mip_file):
+                with open(lbl_json) as f:
+                    label_json = json.load(f)
+                    if len(label_json["instances"]) > 0:
+                        birads_max = pd.DataFrame.from_dict(label_json, orient="columns").instances.max()
+                    else:
+                        birads_max = 1
+                new_files.append((lbl_json, lbl_nifti, mip_file, birads_max))
             else:
-                print(f"json: {f_a} \nnifti: {f_b} \nmip: {f_c}")
+                print(f"json: {lbl_json} \nnifti: {lbl_nifti} \nmip: {mip_file}")
         new_files = zip(*new_files)
         return new_files
 
@@ -124,7 +142,8 @@ class DCEMipMask(Dataset):
 class DCEMipMaskTrain(DCEMipMask):
     def __init__(self, tocsv: bool = False):
         super().__init__()
-        self.db = self.db.loc[:int(0.7 * len(self.db)), :].copy()
+        #self.db = self.db.loc[:int(0.7 * len(self.db)), :].copy()
+        self.db = self.db_train.copy()
         print(f"Size of training dataset: {len(self.db)}.")
         
         if tocsv:
@@ -140,7 +159,8 @@ class DCEMipMaskTrain(DCEMipMask):
 class DCEMipMaskValidation(DCEMipMask):
     def __init__(self, tocsv: bool = False):
         super().__init__()
-        self.db = self.db.loc[int(0.7 * len(self.db)):int(0.9 * len(self.db)), :].copy()
+        #self.db = self.db.loc[int(0.7 * len(self.db)):int(0.9 * len(self.db)), :].copy()
+        self.db = self.db_val.copy()
         print(f"Size of validation dataset: {len(self.db)}.")
         
         if tocsv:
