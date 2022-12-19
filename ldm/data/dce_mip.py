@@ -88,7 +88,7 @@ class DCEMipMask(Dataset):
         # split into training / test dataset here
         self.db_train, self.db_val = train_test_split(
             self.db,
-            test_size=0.3,
+            test_size=0.25,
             random_state=42,
             stratify=self.db[["birads_max"]]
         )
@@ -173,12 +173,7 @@ class DCEMipMaskValidation(DCEMipMask):
         return len(self.db)
 
 
-if __name__ == "__main__":
-    import torch.nn as nn
-    import matplotlib.pyplot as plt
-    from PIL import Image
-    import torchvision.transforms as T
-    ds = DCEMipMaskTrain(tocsv=True)
+def dataset_stats(ds):
     unique = {}
     for i in range(len(ds)):
         item = ds.__getitem__(i)
@@ -188,9 +183,17 @@ if __name__ == "__main__":
             else:
                 unique[int(u)] += 1
     print(unique)
-    
+
+if __name__ == "__main__":
+    import torch.nn as nn
+    import matplotlib.pyplot as plt
+    from PIL import Image
+    import torchvision.transforms as T
+    ds_train = DCEMipMaskTrain(tocsv=True)
+    dataset_stats(ds_train)
     
     ds_val = DCEMipMaskValidation(tocsv=True)
+    dataset_stats(ds_val)
     # transform = T.ToPILImage()
     # save_path = "/raid/home/follels/Documents/latent-diffusion/samples/real"
     # for i in range(100):
