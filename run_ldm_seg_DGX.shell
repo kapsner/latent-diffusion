@@ -7,6 +7,7 @@ python main.py -b configs/latent-diffusion/dce_mip-vq-seg.yaml -t -r /raid/home/
 - adjustments for segmentation-conditioned diffusion-model in configs/latent-diffusion/dce_mip-vq-seg.yaml
 - data-loader in ldm/data/dce_mip.py
 - autoencoder-config in configs/autoencoder/ae_dce_mip.yaml
+- Erzeugen Testfälle: sample_diffusion_segmentation.py 
 
 ## tb:
 docker exec -it pdsc_jpylab_gpu_run tensorboard --host=0.0.0.0 --port=6006 --logdir=/home/user/development/trainings/diffusionmodels
