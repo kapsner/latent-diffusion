@@ -38,7 +38,7 @@ model:
         embed_dim: 3
         n_embed: 8192
         monitor: val/rec_loss
-        ckpt_path: /raid/home/follels/Documents/latent-diffusion/logs/2022-10-17T10-50-26_ae_dce_mip/checkpoints/epoch=000188.ckpt
+        ckpt_path: /raid/store_your_files_here/dce_mip_diffusion/models/ae_dce_mip/checkpoints/epoch=000188.ckpt
         ddconfig:
           attn_type: none
           double_z: false
