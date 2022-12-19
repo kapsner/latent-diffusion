@@ -69,8 +69,11 @@ class DCEMipMask(Dataset):
     def __init__(self, path:str="/raid/store_your_files_here/dce_mip_diffusion/data/"):
         label_path = os.path.join(path, "labelsTr")
         label_jsons = glob(os.path.join(label_path, "*.json"))
+        print(f"# label: {len(label_jsons)}")
         label_nii = [l.replace("json", "nii.gz") for l in label_jsons]
+        print(f"# nifti: {len(label_nii)}")
         mip_files = [l.replace("labelsTr", "dce_mips2").replace(".json", "_mip.npy") for l in label_jsons]
+        print(f"# mips: {len(mip_files)}")
         label_jsons, label_nii, mip_files = self.remove_missing_files((label_jsons, label_nii, mip_files))
 
         self.db = pd.DataFrame({
@@ -78,7 +81,9 @@ class DCEMipMask(Dataset):
             "label_nii_path": label_nii,
             "mip_path": mip_files
         })
-        print()
+        print(f"# database: {len(self.db)}")
+        
+        
 
     @staticmethod
     def remove_missing_files(files:tuple):
@@ -86,6 +91,8 @@ class DCEMipMask(Dataset):
         for f_a, f_b, f_c in zip(*files):
             if os.path.exists(f_a) and os.path.exists(f_b) and os.path.exists(f_c):
                 new_files.append((f_a, f_b, f_c))
+            else:
+                print(f"json: {f_a} \nnifti: {f_b} \nmip: {f_c}")
         new_files = zip(*new_files)
         return new_files
 
@@ -115,20 +122,32 @@ class DCEMipMask(Dataset):
 
 
 class DCEMipMaskTrain(DCEMipMask):
-    def __init__(self):
+    def __init__(self, tocsv: bool = False):
         super().__init__()
         self.db = self.db.loc[:int(0.7 * len(self.db)), :].copy()
         print(f"Size of training dataset: {len(self.db)}.")
+        
+        if tocsv:
+            self.db.to_csv(
+                path_or_buf="/home/user/development/trainings/diffusionmodels/train.csv",
+                index=False
+            )
 
     def __len__(self):
         return len(self.db)
 
 
 class DCEMipMaskValidation(DCEMipMask):
-    def __init__(self):
+    def __init__(self, tocsv: bool = False):
         super().__init__()
         self.db = self.db.loc[int(0.7 * len(self.db)):int(0.9 * len(self.db)), :].copy()
         print(f"Size of validation dataset: {len(self.db)}.")
+        
+        if tocsv:
+            self.db.to_csv(
+                path_or_buf="/home/user/development/trainings/diffusionmodels/val.csv",
+                index=False
+            )
 
     def __len__(self):
         return len(self.db)
@@ -139,7 +158,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from PIL import Image
     import torchvision.transforms as T
-    ds = DCEMipMaskTrain()
+    ds = DCEMipMaskTrain(tocsv=True)
     unique = {}
     for i in range(len(ds)):
         item = ds.__getitem__(i)
@@ -149,6 +168,9 @@ if __name__ == "__main__":
             else:
                 unique[int(u)] += 1
     print(unique)
+    
+    
+    ds_val = DCEMipMaskValidation(tocsv=True)
     # transform = T.ToPILImage()
     # save_path = "/raid/home/follels/Documents/latent-diffusion/samples/real"
     # for i in range(100):
