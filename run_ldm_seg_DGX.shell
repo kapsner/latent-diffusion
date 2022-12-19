@@ -1,1 +1,5 @@
-python main.py -b configs/latent-diffusion/dce_mip-vq-seg.yaml -t -r /raid/home/follels/Documents/latent-diffusion/logs/2022-11-10T15-55-09_dce_mip-vq-seg/checkpoints/last.ckpt
+python main.py -b configs/latent-diffusion/dce_mip-vq-seg.yaml -t -r /raid/home/follels/Documents/latent-diffusion/logs/2022-11-11T14-15-24_dce_mip-vq-seg/checkpoints/last.ckpt
+
+
+# lorenz: 19.12.2022
+python main.py -b configs/latent-diffusion/dce_mip-vq-seg.yaml -t -n dce_mip-vq-seg -l /home/user/development/trainings/diffusionmodels

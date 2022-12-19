@@ -5,3 +5,8 @@ logs/*
 *.zip
 *.png
 *.txt
+
+src/*
+.ipynb_checkpoints
+*.swp
+
