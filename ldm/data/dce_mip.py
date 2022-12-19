@@ -67,10 +67,10 @@ class DCEMipValidation(DCEMip):
 
 class DCEMipMask(Dataset):
     def __init__(self, path:str="/raid/store_your_files_here/dce_mip_diffusion/data/"):
-        label_path = os.path.join(path, "labelsTr_221111")
+        label_path = os.path.join(path, "labelsTr")
         label_jsons = glob(os.path.join(label_path, "*.json"))
         label_nii = [l.replace("json", "nii.gz") for l in label_jsons]
-        mip_files = [l.replace("labelsTr_221111", "dce_mips2").replace(".json", "_mip.npy") for l in label_jsons]
+        mip_files = [l.replace("labelsTr", "dce_mips2").replace(".json", "_mip.npy") for l in label_jsons]
         label_jsons, label_nii, mip_files = self.remove_missing_files((label_jsons, label_nii, mip_files))
 
         self.db = pd.DataFrame({
