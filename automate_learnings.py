@@ -91,7 +91,7 @@ if __name__ == "__main__":
         run_id = "dce_mip-vq-seg" + "_" + _row["param_id"]
         
         # start learning
-        cmd_train = "main.py -b " + args.base + \
+        cmd_train = "python main.py -b " + args.base + \
             " -t -n " + run_id + \
                 " -l " + args.logdir
         os.system(cmd_train)
@@ -110,6 +110,6 @@ if __name__ == "__main__":
             output_name = run_id + "_" + checkpoint_name.replace(".ckpt", "")
             full_checkpoint_path = os.path.join(checkpoint_dir_last_run, checkpoint_name)
 
-            cmd_inference = "sample_diffusion_segmentation.py -c " + full_checkpoint_path + \
+            cmd_inference = "python sample_diffusion_segmentation.py -c " + full_checkpoint_path + \
                 " -b " + args.base + \
                 " -n " + output_name + " -o /home/user/development/diffusion_models/sample_images"

@@ -17,3 +17,8 @@ docker exec -it pdsc_jpylab_gpu_run tensorboard --host=0.0.0.0 --port=6006 --log
 ### lorenz: 19.12.2022
 python main.py -b configs/latent-diffusion/dce_mip-vq-seg.yaml -t -n dce_mip-vq-seg -l /home/user/development/trainings/diffusionmodels
 
+## lorenz: 20.12.2022
+python automate_learnings.py \
+  -c /home/user/development/diffusion_models/latent-diffusion/param_grid_221220.csv \
+  -b /home/user/development/diffusion_models/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml \
+  -l /home/user/development/trainings/diffusionmodels
