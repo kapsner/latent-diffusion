@@ -12,6 +12,8 @@ dependencies:
   - pip:
     - SimpleITK==2.2.1
     - scikit-learn==3.1.0
+    - flatten_dict
+    - yaml
     - albumentations==0.4.3
     - opencv-python==4.1.2.30
     - pudb==2019.2

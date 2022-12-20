@@ -9,4 +9,4 @@ logs/*
 src/*
 .ipynb_checkpoints
 *.swp
-
+*.csv

@@ -13,6 +13,8 @@ from omegaconf import OmegaConf
 from ldm.util import instantiate_from_config
 from ldm.data.dce_mip import DCEMipMaskValidation
 
+import argparse, logging
+
 
 def load_model_from_config(config, ckpt):
     print(f"Loading model from {ckpt}")
@@ -25,51 +27,89 @@ def load_model_from_config(config, ckpt):
     return model
 
 
-def get_model():
-    config = OmegaConf.load("/home/user/development/diffusion_models/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml")
-    model = load_model_from_config(config, "/home/user/development/trainings/diffusionmodels/2022-12-19T20-08-49_dce_mip-vq-seg/checkpoints/val/loss=0.139049-epoch=000180.ckpt")
+def get_model(config_file, checkpoint_path):
+    config = OmegaConf.load(config_file)
+    model = load_model_from_config(config, checkpoint_path)
     return model
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-c",
+        "--checkpoint",
+        dest="checkpoint",
+        type=str,
+        default=None,
+        help="The model checkpoint."
+    )
+    parser.add_argument(
+        "-b",
+        "--base",
+        dest="base",
+        type=str,
+        default=None,
+        help="The base config file."
+    )
+    parser.add_argument(
+        "-n",
+        "--name",
+        dest="name",
+        type=str,
+        default=None,
+        help="The name of the project."
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        dest="output",
+        type=str,
+        default=None,
+        help="The output directory."
+    )
+    args = parser.parse_args()
 
-model = get_model()
-sampler = DDIMSampler(model)
+    logging.basicConfig(level=logging.INFO)
 
-number_of_samples_per_case = 10
-ddim_steps = 200
-ddim_eta = 1
-batch_size = number_of_samples_per_case
 
-validation_set = DCEMipMaskValidation()
+    model = get_model(config_file=args.base, checkpoint_path=args.checkpoint)
+    sampler = DDIMSampler(model)
 
-save_path = "/home/user/development/diffusion_models/sample_images/221220_epoch180"
+    number_of_samples_per_case = 10
+    ddim_steps = 200
+    ddim_eta = 1
+    batch_size = number_of_samples_per_case
 
-with torch.no_grad():
-    with model.ema_scope():
-        for k in tqdm(range(len(validation_set))):
-            val_sample = validation_set.__getitem__(k)
-            samples = []
-            c = model.get_learned_conditioning(
-                val_sample[model.cond_stage_key].to(model.device)[None, None]
-            )
-            c = c.repeat(number_of_samples_per_case, 1, 1, 1)  # Repeat same segmentation mask conditioning
-            samples_ddim, _ = sampler.sample(S=ddim_steps,
-                                            conditioning=c,
-                                            batch_size=batch_size,
-                                            shape=[3, 64, 64],
-                                            verbose=False,
-                                            eta=ddim_eta)
+    validation_set = DCEMipMaskValidation()
 
-            x_samples_ddim = model.decode_first_stage(samples_ddim)
-            x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
-            image = torch.clamp((val_sample["image"] + 1.0) / 2.0, min=0.0, max=1.0)
-            segmentation = torch.clamp(val_sample["segmentation"] / 6.0, min=0.0, max=1.0)
-            save_path_folder = os.path.join(save_path, f"{val_sample['info'].replace('.npy', '').split('/')[-1]}")
-            if not os.path.exists(save_path_folder):
-                os.makedirs(save_path_folder)
-            img = Image.fromarray((255.0 * image).squeeze().cpu().numpy().astype(np.uint8))
-            img.save(os.path.join(save_path_folder, "gt.png"))
-            img = Image.fromarray((255.0 * segmentation).squeeze().cpu().numpy().astype(np.uint8))
-            img.save(os.path.join(save_path_folder, "segmentation.png"))
-            for i in range(x_samples_ddim.shape[0]):
-                img = Image.fromarray((255.0 * x_samples_ddim[i]).squeeze().cpu().numpy().astype(np.uint8))
-                img.save(os.path.join(save_path_folder, f"{i}.png"))
+    save_path = os.path.join(args.output, args.name)
+
+    with torch.no_grad():
+        with model.ema_scope():
+            for k in tqdm(range(len(validation_set))):
+                val_sample = validation_set.__getitem__(k)
+                samples = []
+                c = model.get_learned_conditioning(
+                    val_sample[model.cond_stage_key].to(model.device)[None, None]
+                )
+                c = c.repeat(number_of_samples_per_case, 1, 1, 1)  # Repeat same segmentation mask conditioning
+                samples_ddim, _ = sampler.sample(S=ddim_steps,
+                                                conditioning=c,
+                                                batch_size=batch_size,
+                                                shape=[3, 64, 64],
+                                                verbose=False,
+                                                eta=ddim_eta)
+
+                x_samples_ddim = model.decode_first_stage(samples_ddim)
+                x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+                image = torch.clamp((val_sample["image"] + 1.0) / 2.0, min=0.0, max=1.0)
+                segmentation = torch.clamp(val_sample["segmentation"] / 6.0, min=0.0, max=1.0)
+                save_path_folder = os.path.join(save_path, f"{val_sample['info'].replace('.npy', '').split('/')[-1]}")
+                if not os.path.exists(save_path_folder):
+                    os.makedirs(save_path_folder)
+                img = Image.fromarray((255.0 * image).squeeze().cpu().numpy().astype(np.uint8))
+                img.save(os.path.join(save_path_folder, "gt.png"))
+                img = Image.fromarray((255.0 * segmentation).squeeze().cpu().numpy().astype(np.uint8))
+                img.save(os.path.join(save_path_folder, "segmentation.png"))
+                for i in range(x_samples_ddim.shape[0]):
+                    img = Image.fromarray((255.0 * x_samples_ddim[i]).squeeze().cpu().numpy().astype(np.uint8))
+                    img.save(os.path.join(save_path_folder, f"{i}.png"))
