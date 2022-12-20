@@ -26,8 +26,8 @@ def load_model_from_config(config, ckpt):
 
 
 def get_model():
-    config = OmegaConf.load("/raid/home/follels/Documents/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml")
-    model = load_model_from_config(config, "/raid/home/follels/Documents/latent-diffusion/logs/2022-11-11T14-15-24_dce_mip-vq-seg/checkpoints/epoch=000163.ckpt")
+    config = OmegaConf.load("/home/user/development/diffusion_models/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml")
+    model = load_model_from_config(config, "/home/user/development/trainings/diffusionmodels/2022-12-19T20-08-49_dce_mip-vq-seg/checkpoints/val/loss=0.133036-epoch=000073.ckpt")
     return model
 
 
@@ -41,7 +41,7 @@ batch_size = number_of_samples_per_case
 
 validation_set = DCEMipMaskValidation()
 
-save_path = "/raid/home/follels/Documents/latent-diffusion/samples/fake_segmentation"
+save_path = "/home/user/development/diffusion_models/sample_images/221220_epoch73"
 
 with torch.no_grad():
     with model.ema_scope():
@@ -65,7 +65,7 @@ with torch.no_grad():
             segmentation = torch.clamp(val_sample["segmentation"] / 6.0, min=0.0, max=1.0)
             save_path_folder = os.path.join(save_path, f"{val_sample['info'].replace('.npy', '').split('/')[-1]}")
             if not os.path.exists(save_path_folder):
-                os.mkdir(save_path_folder)
+                os.makedirs(save_path_folder)
             img = Image.fromarray((255.0 * image).squeeze().cpu().numpy().astype(np.uint8))
             img.save(os.path.join(save_path_folder, "gt.png"))
             img = Image.fromarray((255.0 * segmentation).squeeze().cpu().numpy().astype(np.uint8))
