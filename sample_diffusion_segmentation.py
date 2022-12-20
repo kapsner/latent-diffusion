@@ -27,7 +27,7 @@ def load_model_from_config(config, ckpt):
 
 def get_model():
     config = OmegaConf.load("/home/user/development/diffusion_models/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml")
-    model = load_model_from_config(config, "/home/user/development/trainings/diffusionmodels/2022-12-19T20-08-49_dce_mip-vq-seg/checkpoints/val/loss=0.133036-epoch=000073.ckpt")
+    model = load_model_from_config(config, "/home/user/development/trainings/diffusionmodels/2022-12-19T20-08-49_dce_mip-vq-seg/checkpoints/val/loss=0.139049-epoch=000180.ckpt")
     return model
 
 
@@ -41,7 +41,7 @@ batch_size = number_of_samples_per_case
 
 validation_set = DCEMipMaskValidation()
 
-save_path = "/home/user/development/diffusion_models/sample_images/221220_epoch73"
+save_path = "/home/user/development/diffusion_models/sample_images/221220_epoch180"
 
 with torch.no_grad():
     with model.ema_scope():
