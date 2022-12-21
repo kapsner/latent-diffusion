@@ -113,3 +113,4 @@ if __name__ == "__main__":
             cmd_inference = "python sample_diffusion_segmentation.py -c " + full_checkpoint_path + \
                 " -b " + args.base + \
                 " -n " + output_name + " -o /home/user/development/diffusion_models/sample_images"
+            os.system(cmd_inference)
