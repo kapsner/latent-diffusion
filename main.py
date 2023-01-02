@@ -4,6 +4,7 @@ import time
 import torch
 import torchvision
 import pytorch_lightning as pl
+import pandas as pd
 
 from packaging import version
 from omegaconf import OmegaConf
@@ -672,6 +673,20 @@ if __name__ == "__main__":
         print("#### Data #####")
         for k in data.datasets:
             print(f"{k}, {data.datasets[k].__class__.__name__}, {len(data.datasets[k])}")
+
+        # save pandas datasets
+        for _key, _value in data.datasets.items():
+            if _value.db is not None and isinstance(_value.db, pd.DataFrame):
+                dsfn = os.path.join(
+                    logdir,
+                    "dataset_" + _key + ".csv"
+                )
+                os.makedirs(logdir, exist_ok=True)
+                _value.db.to_csv(
+                    path_or_buf=dsfn,
+                    index=False
+                )
+
 
         # configure learning rate
         bs, base_lr = config.data.params.batch_size, config.model.base_learning_rate
