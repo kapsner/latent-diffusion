@@ -60,7 +60,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
-    
+
+    # change working directory
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
     # read grid
     grid = read_grid(args.csv_file)

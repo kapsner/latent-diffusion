@@ -14,7 +14,7 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 import numpy as np
 from torch.utils.data import Dataset
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupKFold
 
 
 class DCEMip(Dataset):
@@ -77,21 +77,48 @@ class DCEMipMask(Dataset):
         print(f"# mips: {len(mip_files)}")
         label_jsons, label_nii, mip_files, birads_max = self.remove_missing_files((label_jsons, label_nii, mip_files))
 
-        self.db = pd.DataFrame({
+        database = pd.DataFrame({
             "label_json_path": label_jsons,
             "label_nii_path": label_nii,
             "mip_path": mip_files,
             "birads_max": birads_max
         })
-        print(f"# database: {len(self.db)}")
-        
-        # split into training / test dataset here
-        self.db_train, self.db_val = train_test_split(
-            self.db,
-            test_size=0.25,
-            random_state=42,
-            stratify=self.db[["birads_max"]]
+        print(f"# database: {len(database)}")
+
+        pattern_extract = database.mip_path.str.extract(
+            pat=".*/(\d+)_(\d+)_(\d+).*\.npy|nii\.gz$"
         )
+
+        pattern_extract.rename(
+            columns={
+                0: "patient_id",
+                1: "study_date",
+                2: "series_num"
+            },
+            inplace=True
+        )
+        database = database.merge(
+            right=pattern_extract,
+            how="outer",
+            left_index=True,
+            right_index=True,
+            suffixes=["", ""]
+        )
+
+
+
+        splits = {}
+
+        kfold = GroupKFold(n_splits=4)
+
+        # split into training / test dataset here
+        for _i, (_train_idx, _test_idx) in enumerate(kfold.split(database[["birads_max"]], groups=database[["patient_id"]])):
+            splits[_i] = {
+                "train_idx": _train_idx,
+                "test_idx": _test_idx
+            }
+        self.db_train = database.iloc[splits[1]["train_idx"]]
+        self.db_val =  database.iloc[splits[1]["test_idx"]]
         
         
 
@@ -184,16 +211,19 @@ def dataset_stats(ds):
                 unique[int(u)] += 1
     print(unique)
 
+def target_class_stats(ds):
+    print(ds.db.birads_max.value_counts(normalize=True) * 100)
+
 if __name__ == "__main__":
     import torch.nn as nn
     import matplotlib.pyplot as plt
     from PIL import Image
     import torchvision.transforms as T
     ds_train = DCEMipMaskTrain(tocsv=True)
-    dataset_stats(ds_train)
+    target_class_stats(ds_train)
     
     ds_val = DCEMipMaskValidation(tocsv=True)
-    dataset_stats(ds_val)
+    target_class_stats(ds_val)
     # transform = T.ToPILImage()
     # save_path = "/raid/home/follels/Documents/latent-diffusion/samples/real"
     # for i in range(100):
@@ -212,4 +242,3 @@ if __name__ == "__main__":
     # emb = ClassEmbedder(512, 14)
     # print(emb(sample, key="class_label").shape)
     # print(emb(sample, key="class_label"))
-
