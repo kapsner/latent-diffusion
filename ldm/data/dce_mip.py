@@ -119,6 +119,11 @@ class DCEMipMask(Dataset):
             }
         self.db_train = database.iloc[splits[1]["train_idx"]]
         self.db_val =  database.iloc[splits[1]["test_idx"]]
+
+        # safety-check
+        unique_train_ids = self.db_train.patient_id.unique()
+        if len(self.db_val[self.db_val.patient_id.isin(unique_train_ids)]) > 0:
+            raise Exception("Something went wrong with the splitting of the dataset")
         
         
 
