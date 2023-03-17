@@ -109,7 +109,7 @@ class DCEMipMask(Dataset):
 
         splits = {}
 
-        kfold = GroupKFold(n_splits=4)
+        kfold = GroupKFold(n_splits=5)
 
         # split into training / test dataset here
         for _i, (_train_idx, _test_idx) in enumerate(kfold.split(database[["birads_max"]], groups=database[["patient_id"]])):
@@ -124,7 +124,6 @@ class DCEMipMask(Dataset):
         unique_train_ids = self.db_train.patient_id.unique()
         if len(self.db_val[self.db_val.patient_id.isin(unique_train_ids)]) > 0:
             raise Exception("Something went wrong with the splitting of the dataset")
-        
         
 
     @staticmethod
@@ -164,6 +163,7 @@ class DCEMipMask(Dataset):
             mapper = dict(zip([int(k) for k in label_json["instances"].keys()], label_json["instances"].values()))
             mapper[0] = 0  # Background
             mask = np.vectorize(mapper.__getitem__ )(mask).astype(np.float32)
+            # transpose mask to image shape
             mask = zoom(mask, (image.shape[0] / mask.shape[0], image.shape[1] / mask.shape[1]), order=0)
         mask = TF.to_tensor(mask).squeeze()
 
@@ -198,6 +198,67 @@ class DCEMipMaskValidation(DCEMipMask):
         if tocsv:
             self.db.to_csv(
                 path_or_buf="/home/user/development/trainings/diffusionmodels/val.csv",
+                index=False
+            )
+
+    def __len__(self):
+        return len(self.db)
+
+class DCEMipMaskInpaint(DCEMipMask):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __getitem__(self, index):
+        row = self.db.iloc[index]
+
+        image = np.load(row["mip_path"]).squeeze()
+        img_shape = image.shape
+        image = TF.to_tensor(image).squeeze()
+
+        mask = sitk.ReadImage("label_nii_path")
+        mask = sitk.GetArrayFromImage(mask)
+        mask = mask[0]
+
+        # transpose mask to image shape
+        mask = zoom(mask, (img_shape[0] / mask.shape[0], img_shape[1] / mask.shape[1]), order=0)
+
+        mask[mask < 0.5] = 0
+        mask[mask >= 0.5] = 1
+        mask = torch.from_numpy(mask).squeeze()
+
+        masked_image = (1-mask)*image
+
+        sample = {"image": image, "mask": mask, "masked_image": masked_image, "info": row["mip_path"]}
+        return sample
+
+
+class DCEMipInpaintTrain(DCEMipMaskInpaint):
+    def __init__(self, tocsv: bool = False):
+        super().__init__()
+        #self.db = self.db.loc[:int(0.7 * len(self.db)), :].copy()
+        self.db = self.db_train.copy()
+        print(f"Size of training dataset: {len(self.db)}.")
+        
+        if tocsv:
+            self.db.to_csv(
+                path_or_buf="/home/user/development/trainings/diffusionmodels/train_inpaint.csv",
+                index=False
+            )
+
+    def __len__(self):
+        return len(self.db)
+
+
+class DCEMipInpaintValidation(DCEMipMaskInpaint):
+    def __init__(self, tocsv: bool = False):
+        super().__init__()
+        #self.db = self.db.loc[int(0.7 * len(self.db)):int(0.9 * len(self.db)), :].copy()
+        self.db = self.db_val.copy()
+        print(f"Size of validation dataset: {len(self.db)}.")
+        
+        if tocsv:
+            self.db.to_csv(
+                path_or_buf="/home/user/development/trainings/diffusionmodels/val_inpaint.csv",
                 index=False
             )
 

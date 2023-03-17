@@ -1,0 +1,3 @@
+python inpaintings.py \
+    --indir /raid/store_your_files_here/dce_mip_diffusion/data/ \
+    --outdir /home/user/development/diffusion_models/sample_images/inpaintings

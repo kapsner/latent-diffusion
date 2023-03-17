@@ -10,3 +10,5 @@ src/*
 .ipynb_checkpoints
 *.swp
 *.csv
+
+outputs

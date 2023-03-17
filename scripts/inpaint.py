@@ -51,6 +51,7 @@ if __name__ == "__main__":
         help="number of ddim sampling steps",
     )
     opt = parser.parse_args()
+    os.chdir(os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")))
 
     masks = sorted(glob.glob(os.path.join(opt.indir, "*_mask.png")))
     images = [x.replace("_mask.png", ".png") for x in masks]
