@@ -28,3 +28,29 @@ python automate_learnings.py \
   -c /home/user/development/diffusion_models/latent-diffusion/param_grid_230102.csv \
   -b /home/user/development/diffusion_models/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml \
   -l /home/user/development/trainings/diffusionmodels
+
+## lorenz: 04.01.2023
+python automate_learnings.py \
+  -c /home/user/development/diffusion_models/latent-diffusion/param_grid_230104.csv \
+  -b /home/user/development/diffusion_models/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml \
+  -l /home/user/development/trainings/diffusionmodels
+  
+  
+## lorenz: 06.01.2023
+python automate_learnings.py \
+  -c /home/user/development/diffusion_models/latent-diffusion/param_grid_230106.csv \
+  -b /home/user/development/diffusion_models/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml \
+  -l /home/user/development/trainings/diffusionmodels
+
+## lorenz: 09.01.2023
+python automate_learnings.py \
+  -c /home/user/development/diffusion_models/latent-diffusion/param_grid_230109.csv \
+  -b /home/user/development/diffusion_models/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml \
+  -l /home/user/development/trainings/diffusionmodels
+  
+  
+## lorenz: 19.01.2023 // training for reading study
+python automate_learnings.py \
+  -c /home/user/development/diffusion_models/latent-diffusion/param_grid_230119.csv \
+  -b /home/user/development/diffusion_models/latent-diffusion/configs/latent-diffusion/dce_mip-vq-seg.yaml \
+  -l /home/user/development/trainings/diffusionmodels
