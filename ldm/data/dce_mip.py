@@ -109,7 +109,7 @@ class DCEMipMask(Dataset):
 
         splits = {}
 
-        kfold = GroupKFold(n_splits=4)
+        kfold = GroupKFold(n_splits=5)
 
         # split into training / test dataset here
         for _i, (_train_idx, _test_idx) in enumerate(kfold.split(database[["birads_max"]], groups=database[["patient_id"]])):
